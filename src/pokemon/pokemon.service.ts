@@ -4,6 +4,7 @@ import { UpdatePokemonDto } from './dto/update-pokemon.dto';
 import { isValidObjectId, Model } from 'mongoose';
 import { Pokemon } from './entities/pokemon.entity';
 import { InjectModel } from '@nestjs/mongoose';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class PokemonService {
@@ -18,17 +19,18 @@ export class PokemonService {
       return pokemon;
     } catch (error) {
 
-      if(error.code === 1000){
-        throw new BadRequestException(`El Pokémon existe en la base de datos ${JSON.stringify(error.keyValu)}`)
-      }
-      console.log(error);
-      throw new InternalServerErrorException(`No se puede crear un Pokémon - revise log.`)
+      this.handleExceptions(error);
+    
 }
 }
 
-async findAll() {
-  const pokemon = await this.pokemonModel.find();
-  return pokemon;
+async findAll(paginatioDto: PaginationDto) {
+  const { limit = 10, offset = 0 } = paginatioDto;
+  return this.pokemonModel.find()
+  .limit(limit)
+  .skip(offset)
+  .sort({ no: 1 })
+  .select('-__v')
 }
 
 async findOne(term: string) {
